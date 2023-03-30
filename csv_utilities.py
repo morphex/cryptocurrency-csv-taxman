@@ -1,5 +1,7 @@
 #!/usr/bin/python3
 
+from decimal import Decimal
+from datetime import datetime
 import csv, sys
 
 ZERO = Decimal(0)
@@ -62,6 +64,37 @@ def guess_date_format(dates):
         raise ValueError("Unable to determine date format")
     return year_index, month_index, day_index
 
+def guess_time_format(times):
+    return 0, 1, 2
+
+def guess_datetime_format(datetimes):
+    """Guesses the datetime format, based on a list of datetimes."""
+    datetimes = tuple(datetimes)
+    whitespace_separator = False
+    colon_separator = False
+    separator = ""
+    for datetime_ in datetimes:
+        if " " in datetime_:
+            whitespace_separator = True
+            separator = " "
+            continue
+        else:
+            if whitespace_separator:
+                raise ValueError("Datetimes with and without space separator")
+            else:
+                colon_separator = True
+                separator = ":"
+                raise NotImplementedError(": not supported as separator between date and time")
+    dates = []
+    times = []
+    for datetime_ in datetimes:
+        date_, time_ = datetime_.split(separator)
+        dates.append(date_)
+        times.append(time_)
+    date_format = guess_date_format(dates)
+    time_format = guess_time_format(times)
+    return date_format, time_format
+
 def parse_date(date, format):
     """Returns year, month, day of a parsed date. Format is year_index, month_index, day_index."""
     if date.startswith('"') and date.endswith('"'):
@@ -77,3 +110,15 @@ def parse_float(value):
         return float(value)
     except ValueError:
         return float(value.replace(",", "."))
+
+def sort_lines(csv_lines, datetime=True, field=0):
+    """Sorts CSV lines based on a field."""
+    separator = guess_separator(csv_lines)
+    for index in range(len(csv_lines)):
+        csv_lines[index] = csv_lines[index].split(separator)
+    if datetime:
+        format = guess_datetime_format(map(lambda x: x[field], csv_lines))
+        print(format)
+
+lines = open("../eth.csv").readlines()
+sort_lines(lines)
