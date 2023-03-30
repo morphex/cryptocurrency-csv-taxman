@@ -5,7 +5,7 @@ from datetime import datetime
 import csv, sys
 
 ZERO = Decimal(0)
-DEBUG = True
+DEBUG = False
 
 def DEBUG_PRINT(*arguments):
     if DEBUG:
@@ -93,7 +93,7 @@ def guess_datetime_format(datetimes):
         times.append(time_)
     date_format = guess_date_format(dates)
     time_format = guess_time_format(times)
-    return date_format, time_format
+    return date_format, time_format, separator
 
 def parse_date(date, format):
     """Returns year, month, day of a parsed date. Format is year_index, month_index, day_index."""
@@ -104,6 +104,15 @@ def parse_date(date, format):
     year, month, day = date_[format[0]], date_[format[1]], date_[format[2]]
     return int(year), int(month), int(day)
 
+def parse_time(time_, format=":"):
+    """Returns hour, minute, second of a parsed time."""
+    try:
+        hour, minute, second = time_.split(format)
+    except ValueError:
+        hour, minute = time_.split(format)
+        second = "00"
+    return int(hour), int(minute), int(second)
+
 def parse_float(value):
     """Parses a float, using either a . or , as the denominator."""
     try:
@@ -111,14 +120,46 @@ def parse_float(value):
     except ValueError:
         return float(value.replace(",", "."))
 
-def sort_lines(csv_lines, datetime=True, field=0):
+def to_strptime(date_format, time_format, separator):
+    """Creates a string to parse dates using strptime."""
+    date_ = [None, None, None]
+    date_[date_format[0]] = "%Y"
+    date_[date_format[1]] = "%m"
+    date_[date_format[2]] = "%d"
+    time_ = [None, None, None]
+    time_[time_format[0]] = "%H"
+    time_[time_format[1]] = "%M"
+    time_[time_format[2]] = "%S"
+    strptime = "%s-%s-%s%s%s:%s:%s" % (date_[0], date_[1], date_[2], separator,
+                                   time_[0], time_[1], time_[2])
+    return strptime
+
+def sort_lines(csv_lines, datetime_=True, field=0, keep_datetime_objects=False):
     """Sorts CSV lines based on a field."""
     separator = guess_separator(csv_lines)
     for index in range(len(csv_lines)):
         csv_lines[index] = csv_lines[index].split(separator)
-    if datetime:
-        format = guess_datetime_format(map(lambda x: x[field], csv_lines))
-        print(format)
+    if datetime_:
+        date_format, time_format, datetime_separator = \
+          guess_datetime_format(map(lambda x: x[field], csv_lines))
+        strptime_format = to_strptime(date_format, time_format, datetime_separator)
+        DEBUG_PRINT("strptime_format", strptime_format)
+        for index in range(len(csv_lines)):
+            csv_lines[index][field] = datetime.strptime(csv_lines[index][field],
+                                                        strptime_format)
+    csv_lines.sort(key=lambda x: x[field])
+    if not keep_datetime_objects:
+        for index in range(len(csv_lines)):
+            csv_lines[index][field] = csv_lines[index][field].strftime(strptime_format)
+    return separator
 
-lines = open("../eth.csv").readlines()
-sort_lines(lines)
+def print_sort_lines(file):
+    lines = []
+    for line in open(file).readlines():
+        lines.append(line.rstrip())
+    separator = sort_lines(lines)
+    for line in lines:
+        print(separator.join(line))
+
+if __name__ == "__main__":
+    print_sort_lines(sys.argv[1])
