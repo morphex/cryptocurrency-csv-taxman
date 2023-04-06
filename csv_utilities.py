@@ -6,6 +6,7 @@ import csv, sys
 
 ZERO = Decimal(0)
 DEBUG = False
+SNIFFER = csv.Sniffer()
 
 def DEBUG_PRINT(*arguments):
     if DEBUG:
@@ -61,10 +62,12 @@ def guess_date_format(dates):
                 month_index = 1
                 break
     else:
-        raise ValueError("Unable to determine date format")
+        raise ValueError("Unable to determine date format", dates[0])
     return year_index, month_index, day_index
 
 def guess_time_format(times):
+    if times[0] == None:
+        return None
     return 0, 1, 2
 
 def guess_datetime_format(datetimes):
@@ -72,6 +75,7 @@ def guess_datetime_format(datetimes):
     datetimes = tuple(datetimes)
     whitespace_separator = False
     colon_separator = False
+    no_time = False
     separator = ""
     for datetime_ in datetimes:
         if " " in datetime_:
@@ -81,14 +85,21 @@ def guess_datetime_format(datetimes):
         else:
             if whitespace_separator:
                 raise ValueError("Datetimes with and without space separator")
-            else:
+            elif ":" in datetime_:
                 colon_separator = True
                 separator = ":"
-                raise NotImplementedError(": not supported as separator between date and time")
+                raise NotImplementedError(": not supported as separator between date and time", datetimes[0])
+            elif len(datetime_) <= 10:
+                # Only have a date
+                no_time = True
     dates = []
     times = []
     for datetime_ in datetimes:
-        date_, time_ = datetime_.split(separator)
+        if no_time:
+            date_ = datetime_
+            time_ = None
+        else:
+            date_, time_ = datetime_.split(separator)
         dates.append(date_)
         times.append(time_)
     date_format = guess_date_format(dates)
@@ -126,17 +137,24 @@ def to_strptime(date_format, time_format, separator):
     date_[date_format[0]] = "%Y"
     date_[date_format[1]] = "%m"
     date_[date_format[2]] = "%d"
-    time_ = [None, None, None]
-    time_[time_format[0]] = "%H"
-    time_[time_format[1]] = "%M"
-    time_[time_format[2]] = "%S"
-    strptime = "%s-%s-%s%s%s:%s:%s" % (date_[0], date_[1], date_[2], separator,
-                                   time_[0], time_[1], time_[2])
-    return strptime
+    date_format_string = "%s-%s-%s" % (date_[0], date_[1], date_[2])
+    if time_format:
+        time_ = [None, None, None]
+        time_[time_format[0]] = "%H"
+        time_[time_format[1]] = "%M"
+        time_[time_format[2]] = "%S"
+        time_format_string = ":".join(time_)
+    else:
+        time_format_string = ""
+    return date_format_string + separator + time_format_string
 
 def sort_lines(csv_lines, datetime_=True, field=0, keep_datetime_objects=False):
     """Sorts CSV lines based on a field."""
     separator = guess_separator(csv_lines)
+    has_header = SNIFFER.has_header("\n".join(csv_lines[0:3]))
+    print("Has header", has_header)
+    if has_header:
+        csv_lines.pop(0)
     for index in range(len(csv_lines)):
         csv_lines[index] = csv_lines[index].split(separator)
     if datetime_:
@@ -154,12 +172,17 @@ def sort_lines(csv_lines, datetime_=True, field=0, keep_datetime_objects=False):
     return separator
 
 def print_sort_lines(file):
+    lines, separator = get_sorted_lines(file)
+    for line in lines:
+        print(separator.join(line))
+
+def get_sorted_lines(file):
     lines = []
     for line in open(file).readlines():
         lines.append(line.rstrip())
     separator = sort_lines(lines)
-    for line in lines:
-        print(separator.join(line))
-
+    return lines, separator
+    
+        
 if __name__ == "__main__":
     print_sort_lines(sys.argv[1])
