@@ -5,12 +5,9 @@ from datetime import datetime
 import csv, sys
 
 ZERO = Decimal(0)
-DEBUG = False
 SNIFFER = csv.Sniffer()
 
-def DEBUG_PRINT(*arguments):
-    if DEBUG:
-        print(*arguments, file=sys.stderr)
+from utilities import DEBUG_PRINT
 
 def guess_separator(csv_data_lines, default=","):
     """Returns a guess at what the column separator is in the CSV data."""
@@ -152,7 +149,7 @@ def sort_lines(csv_lines, datetime_=True, field=0, keep_datetime_objects=False):
     """Sorts CSV lines based on a field."""
     separator = guess_separator(csv_lines)
     has_header = SNIFFER.has_header("\n".join(csv_lines[0:3]))
-    print("Has header", has_header)
+    DEBUG_PRINT("Has header", has_header)
     if has_header:
         csv_lines.pop(0)
     for index in range(len(csv_lines)):
@@ -176,11 +173,11 @@ def print_sort_lines(file):
     for line in lines:
         print(separator.join(line))
 
-def get_sorted_lines(file):
+def get_sorted_lines(file, sort_field=0):
     lines = []
     for line in open(file).readlines():
         lines.append(line.rstrip())
-    separator = sort_lines(lines)
+    separator = sort_lines(lines, field=sort_field)
     return lines, separator
     
         

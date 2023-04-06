@@ -1,0 +1,3 @@
+CSV test data USD-NOK is taken from Norwegian central bank data service:
+
+https://www.norges-bank.no/tema/Statistikk/valutakurser/?tab=currency&id=USD
