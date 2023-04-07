@@ -122,9 +122,10 @@ def parse_time(time_, format=":"):
     return int(hour), int(minute), int(second)
 
 def parse_float(value):
-    """Parses a float, using either a . or , as the denominator."""
+    """Parses a float as a Decimal, using either a . or , as the
+denominator."""
     try:
-        return float(value)
+        return Decimal(float(value))
     except ValueError:
         return float(value.replace(",", "."))
 
@@ -168,18 +169,27 @@ def sort_lines(csv_lines, datetime_=True, field=0, keep_datetime_objects=False):
             csv_lines[index][field] = csv_lines[index][field].strftime(strptime_format)
     return separator
 
-def print_sort_lines(file):
-    lines, separator = get_sorted_lines(file)
+def print_sort_lines(filename):
+    lines, separator = get_sorted_lines(filename)
     for line in lines:
         print(separator.join(line))
 
-def get_sorted_lines(file, sort_field=0):
-    lines = []
-    for line in open(file).readlines():
-        lines.append(line.rstrip())
-    separator = sort_lines(lines, field=sort_field)
+def get_sorted_lines(filename, sort_field=0, keep_datetime_objects=False):
+    return get_sorted_lines_file(open(filename, "r"),
+                                 sort_field=sort_field,
+                                 keep_datetime_objects=keep_datetime_objects)
+       
+def get_sorted_lines_file(file, sort_field=0, keep_datetime_objects=False):
+    lines = file.readlines()
+    return sort_lines_wrapper(lines, sort_field=sort_field,
+                              keep_datetime_objects=keep_datetime_objects)
+
+def sort_lines_wrapper(lines, sort_field=0, keep_datetime_objects=False):
+    for index in range(len(lines)):
+        lines[index] = lines[index].rstrip()
+    separator = sort_lines(lines, field=sort_field,
+                           keep_datetime_objects=keep_datetime_objects)
     return lines, separator
-    
-        
+
 if __name__ == "__main__":
     print_sort_lines(sys.argv[1])

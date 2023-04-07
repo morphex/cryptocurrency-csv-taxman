@@ -12,15 +12,26 @@ from utilities import DEBUG_PRINT
 
 def parse_rate_file(filename, low, high, date_index=0):
     rates = OrderedDict()
-    lines, separator = get_sorted_lines(filename, sort_field=date_index)
+    lines, separator = get_sorted_lines(filename, sort_field=date_index,
+                                        keep_datetime_objects=True)
     low_index = int(low)
     high_index = int(high)
     for line in lines:
-        date = line[date_index]
+        date = line[date_index].date()
         low_ = Decimal(parse_float(line[low_index]))
         high_ = Decimal(parse_float(line[high_index]))
         rates[date] = ((low_ + high_) / 2)
     return rates
+
+def find_best_match(rates, date, offset=0):
+    """Returns the rate for the matching day, or the first available prior date."""
+    print(date, offset)
+    if offset < -10:
+        raise ValueError("Invalid rates/date", date, offset)
+    try:
+        return rates[date - timedelta(days=offset)]
+    except KeyError:
+        return find_best_match(rates, date, offset - 1)
 
 def runner():
     try:
@@ -42,7 +53,7 @@ def runner():
     high = int(high)
     rates = parse_rate_file(sys.argv[1], low, high, date_index=date_index)
     keys = tuple(rates.keys())
-    print(rates[keys[0]], rates[keys[-1]], len(rates))
+    print(keys[0], rates[keys[0]], keys[-1], rates[keys[-1]], len(rates))
 
 if __name__ == "__main__":
     runner()
