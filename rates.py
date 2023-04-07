@@ -25,7 +25,7 @@ def parse_rate_file(filename, low, high, date_index=0):
 
 def find_best_match(rates, date, offset=0):
     """Returns the rate for the matching day, or the first available prior date."""
-    print(date, offset)
+    DEBUG_PRINT(date, offset)
     if offset < -10:
         raise ValueError("Invalid rates/date", date, offset)
     try:
