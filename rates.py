@@ -18,8 +18,8 @@ def parse_rate_file(filename, low, high, date_index=0):
     high_index = int(high)
     for line in lines:
         date = line[date_index].date()
-        low_ = Decimal(parse_float(line[low_index]))
-        high_ = Decimal(parse_float(line[high_index]))
+        low_ = parse_float(line[low_index])
+        high_ = parse_float(line[high_index])
         rates[date] = ((low_ + high_) / 2)
     return rates
 

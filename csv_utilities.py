@@ -127,7 +127,7 @@ denominator."""
     try:
         return Decimal(float(value))
     except ValueError:
-        return float(value.replace(",", "."))
+        return Decimal(value.replace(",", "."))
 
 def to_strptime(date_format, time_format, separator):
     """Creates a string to parse dates using strptime."""
@@ -191,5 +191,21 @@ def sort_lines_wrapper(lines, sort_field=0, keep_datetime_objects=False):
                            keep_datetime_objects=keep_datetime_objects)
     return lines, separator
 
+def render_csv_lines(lines, separator=",", string_type=type("")):
+    new_lines = []
+    for line in lines:
+        new_line = []
+        for item in line:
+            if type(item) != string_type:
+                item = str(item)
+            new_line.append(item)
+        new_lines.append(new_line)
+    return new_lines
+
+def print_csv_lines(lines, separator=","):
+    new_lines = render_csv_lines(lines, separator=separator)
+    for line in new_lines:
+        print(separator.join(line))
+    
 if __name__ == "__main__":
     print_sort_lines(sys.argv[1])

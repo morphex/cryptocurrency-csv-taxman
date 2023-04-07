@@ -1,9 +1,20 @@
 #!/usr/bin/python3
 
 import sys
-from csv_utilities import get_sorted_lines, parse_float
+from csv_utilities import get_sorted_lines, parse_float, print_csv_lines
 from rates import parse_rate_file, find_best_match
+from utilities import DEBUG_PRINT
 
+def print_syntax_info():
+    print()
+    print("The following example takes crypto transactions, converts them to USD, then NOK")
+    print()
+    print("./process_chain.py ../etc.csv 0,3 :: ../ETC-USD.csv 3,2 0 :: ./testdata/USD-NOK.csv -1 -2")
+    print()
+    print("./process_Chain <CSV file> <date_index,value_index> :: <CSV file> low_index,high_index date_index ::")
+    print("                <CSV file> low_and_high_index date_index")
+    print()
+    
 def runner_main():
     calls = [[]]
     for item in sys.argv[1:]:
@@ -14,6 +25,7 @@ def runner_main():
     initial_call = calls.pop(0)
     if len(initial_call) < 2:
         print("Error in syntax")
+        print_syntax_info()
         sys.exit(1)
     datetime, value = initial_call[1].split(",")
     initial_datetime_index = int(datetime)
@@ -30,34 +42,30 @@ def runner_main():
         try:
             filename, low_high, date_index = call
         except ValueError:
-            filename, low_high = call
-            date_index = 0
+            try:
+                filename, low_high = call
+                date_index = 0
+            except ValueError:
+                print("Error in syntax")
+                print_syntax_info()
+                sys.exit()
         try:
             low, high = low_high.split(",")
         except ValueError:
             low = high = low_high
         low, high, date_index = int(low), int(high), int(date_index)
-#        print(filename, low, high, date_index)
         rates = parse_rate_file(filename, low, high, date_index=date_index)
         for index in range(len(initial_lines)):
             date = initial_lines[index][initial_datetime_index]
             rate = find_best_match(rates, date.date())
             new_value = initial_lines[index][-1] * rate
             initial_lines[index].append(new_value)
-#    print(initial_lines[0])            
     return initial_lines, separator
-    
+
 def runner(string_type=type("")):
     lines, separator = runner_main()
-    print(lines[0])
-    for line in lines:
-        new_line = []
-        for item in line:
-            if type(item) != string_type:
-                item = str(item)
-            new_line.append(item)
-        print(separator.join(new_line))
-    
+    DEBUG_PRINT(lines[0])
+    print_csv_lines(lines, separator)
     
 if __name__ == "__main__":
     runner()
