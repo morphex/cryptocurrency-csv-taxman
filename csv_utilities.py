@@ -30,11 +30,19 @@ def guess_separator(csv_data_lines, default=","):
 def guess_date_format(dates):
     """Guess the date format given a set of dates."""
     year_index = month_index = day_index = None
+    separator = ""
     for date in dates:
         if date.startswith('"') and date.endswith('"'):
             date = date[1:-1]
         date = date.split(" ")[0]
-        date = list(map(int, date.split("-")))
+        if "-" in date:
+            date = list(map(int, date.split("-")))
+            separator = "-"
+        elif "." in date:
+            date = list(map(int, date.split(".")))
+            separator = "."
+        else:
+            raise ValueError("Unsupported date format", date)
         if not year_index:
             if int(date[0]) > 1000:
                 year_index = 0
@@ -60,7 +68,7 @@ def guess_date_format(dates):
                 break
     else:
         raise ValueError("Unable to determine date format", dates[0])
-    return year_index, month_index, day_index
+    return year_index, month_index, day_index, separator
 
 def guess_time_format(times):
     if times[0] == None:
@@ -135,7 +143,8 @@ def to_strptime(date_format, time_format, separator):
     date_[date_format[0]] = "%Y"
     date_[date_format[1]] = "%m"
     date_[date_format[2]] = "%d"
-    date_format_string = "%s-%s-%s" % (date_[0], date_[1], date_[2])
+    date_separator = date_format[3]
+    date_format_string = date_separator.join((date_[0], date_[1], date_[2]))
     if time_format:
         time_ = [None, None, None]
         time_[time_format[0]] = "%H"
