@@ -111,15 +111,6 @@ def guess_datetime_format(datetimes):
     time_format = guess_time_format(times)
     return date_format, time_format, separator
 
-def parse_date(date, format):
-    """Returns year, month, day of a parsed date. Format is year_index, month_index, day_index."""
-    if date.startswith('"') and date.endswith('"'):
-        date = date[1:-1]
-    date = date.split(" ")[0]
-    date_ = date.split("-")
-    year, month, day = date_[format[0]], date_[format[1]], date_[format[2]]
-    return int(year), int(month), int(day)
-
 def parse_time(time_, format=":"):
     """Returns hour, minute, second of a parsed time."""
     try:
