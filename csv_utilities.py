@@ -222,7 +222,9 @@ def find_absolute_index(sequence, index):
     if index > -1:
         return index
     else:
+        if abs(index) > len(sequence):
+            raise IndexError("%i is not possible" % index)
         return len(sequence) + index
-       
+
 if __name__ == "__main__":
     print_sort_lines(sys.argv[1])
