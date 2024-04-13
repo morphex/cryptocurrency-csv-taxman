@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 
-from decimal import Decimal
+from decimal import Decimal, InvalidOperation
 from datetime import datetime
 import csv, sys
 
@@ -128,6 +128,16 @@ denominator."""
     except ValueError:
         return Decimal(value.replace(",", "."))
 
+def is_float(value):
+    """Returns true if value can be parsed as flaot."""
+    try:
+        parse_float(value)
+        return True
+    except ValueError:
+        return False
+    except InvalidOperation:
+        return False
+
 def to_strptime(date_format, time_format, separator):
     """Creates a string to parse dates using strptime."""
     date_ = [None, None, None]
@@ -206,6 +216,13 @@ def print_csv_lines(lines, separator=","):
     new_lines = render_csv_lines(lines, separator=separator)
     for line in new_lines:
         print(separator.join(line))
-    
+
+def find_absolute_index(sequence, index):
+    """Returns the absolute (non-negative) position in a sequence."""
+    if index > -1:
+        return index
+    else:
+        return len(sequence) + index
+       
 if __name__ == "__main__":
     print_sort_lines(sys.argv[1])
