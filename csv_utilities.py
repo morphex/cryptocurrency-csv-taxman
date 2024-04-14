@@ -70,6 +70,22 @@ def guess_date_format(dates):
         raise ValueError("Unable to determine date format", dates[0])
     return year_index, month_index, day_index, separator
 
+def make_date_range(start, end):
+    date_format = guess_date_format((start, end))
+    date_format = to_strptime(date_format, "", "")
+    start = datetime.strptime(start, date_format).date()
+    end = datetime.strptime(end, date_format).date()
+    return start, end
+
+def filter_on_date_range(start, end, sequence, date_index=0):
+    start, end = make_date_range(start, end)
+    keep = []
+    for item in sequence:
+        date = item[date_index]
+        if date.date() >= start and date.date() <= end:
+            keep.append(item)
+    return keep
+
 def guess_time_format(times):
     if times[0] == None:
         return None
@@ -154,6 +170,7 @@ def to_strptime(date_format, time_format, separator):
         time_format_string = ":".join(time_)
     else:
         time_format_string = ""
+        separarator = ""
     return date_format_string + separator + time_format_string
 
 def sort_lines(csv_lines, datetime_=True, field=0, keep_datetime_objects=False):
