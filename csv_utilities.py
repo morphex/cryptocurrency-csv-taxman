@@ -87,7 +87,10 @@ def filter_on_date_range(start, end, sequence, date_index=0):
     return keep
 
 def guess_time_format(times):
-    time_size = len(times[0])
+    try:
+        time_size = len(times[0])
+    except TypeError:
+        return None
     for time in times:
         length = len(time)
         if length > time_size or length < time_size:

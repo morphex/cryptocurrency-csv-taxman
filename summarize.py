@@ -11,11 +11,15 @@ from csv_utilities import get_sorted_lines, parse_float, is_float, find_absolute
 
 from utilities import DEBUG_PRINT
 
-def parse_transaction_file(filename, date_index=0, field=1, operators=""):
+def parse_transaction_file(filename, date_index=0, field=1, operators="",
+                           start=None, end=None):
     dates = OrderedDict()
     indexes = []
     lines, separator = get_sorted_lines(filename, sort_field=date_index,
                                         keep_datetime_objects=True, expect_quotes=True)
+    if start or end:
+        lines = filter_on_date_range(start, end, lines,
+                                     date_index=date_index)
     for line in lines:
         datetime = line[date_index]
         value = parse_float(line[field])
@@ -53,12 +57,23 @@ def runner():
     elif "--only-subtract" in sys.argv[3:]:
         operators = "subtract"
     operators = operators.split(",")
+    try:
+        start_end = sys.argv[4]
+        start, end = start_end.split(",")
+    except (IndexError, ValueError):
+        start = end = None
     transactions = parse_transaction_file(sys.argv[1], date_index=date_index,
-                                          field=field, operators=operators)
+                                          field=field, operators=operators,
+                                          start=start, end=end)
     count = 0
     values = []
+    total = ZERO
     for date, value in transactions.items():
         print(date, value)
+        total += value
+        count += 1
+    print()
+    print("Total: %f, average %f, entires %i" % (total, total/count, count))
     
 if __name__ == "__main__":
     runner()
