@@ -87,24 +87,37 @@ def filter_on_date_range(start, end, sequence, date_index=0):
     return keep
 
 def guess_time_format(times):
-    if times[0] == None:
-        return None
-    return 0, 1, 2
+    time_size = len(times[0])
+    for time in times:
+        length = len(time)
+        if length > time_size or length < time_size:
+            raise ValueError("Inconsistent time size")
+    elements = times[0].split(":")
+    if len(elements) == 2:
+        return 0,1
+    elif len(elements) == 3:
+        return 0, 1, 2
+    else:
+        raise ValueError("Uknown time format")
 
 def guess_datetime_format(datetimes):
     """Guesses the datetime format, based on a list of datetimes."""
     datetimes = tuple(datetimes)
+#    print(datetimes)
     whitespace_separator = False
     colon_separator = False
     no_time = False
     separator = ""
     for datetime_ in datetimes:
+        if not datetime_:
+            raise ValueError("Empty datetime")
         if " " in datetime_:
             whitespace_separator = True
             separator = " "
             continue
         else:
             if whitespace_separator:
+                print((datetime_,))
                 raise ValueError("Datetimes with and without space separator")
             elif ":" in datetime_:
                 colon_separator = True
@@ -123,6 +136,7 @@ def guess_datetime_format(datetimes):
             date_, time_ = datetime_.split(separator)
         dates.append(date_)
         times.append(time_)
+#    print(times)
     date_format = guess_date_format(dates)
     time_format = guess_time_format(times)
     return date_format, time_format, separator
@@ -150,9 +164,9 @@ def is_float(value):
         parse_float(value)
         return True
     except ValueError:
-        return False
-    except InvalidOperation:
-        return False
+         return False
+    except InvalidOperation as value:
+         return False
 
 def to_strptime(date_format, time_format, separator):
     """Creates a string to parse dates using strptime."""
@@ -163,25 +177,92 @@ def to_strptime(date_format, time_format, separator):
     date_separator = date_format[3]
     date_format_string = date_separator.join((date_[0], date_[1], date_[2]))
     if time_format:
-        time_ = [None, None, None]
-        time_[time_format[0]] = "%H"
-        time_[time_format[1]] = "%M"
-        time_[time_format[2]] = "%S"
-        time_format_string = ":".join(time_)
+        if len(time_format) == 3:
+            time_ = [None, None, None]
+            time_[time_format[0]] = "%H"
+            time_[time_format[1]] = "%M"
+            time_[time_format[2]] = "%S"
+            time_format_string = ":".join(time_)
+        elif len(time_format) == 2:
+            time_ = [None, None]
+            time_[time_format[0]] = "%H"
+            time_[time_format[1]] = "%M"
+            time_format_string = ":".join(time_)
     else:
         time_format_string = ""
         separarator = ""
     return date_format_string + separator + time_format_string
 
-def sort_lines(csv_lines, datetime_=True, field=0, keep_datetime_objects=False):
+def split_with_quotes(csv_row, separator):
+    """Returns a row split on columns, respecting quotes."""
+    DEBUG_PRINT("separator", separator)
+    columns = []
+    column = ""
+    in_double_quotes = False
+    in_single_quotes = False
+    previous = ""
+    for character in csv_row:
+        if character == '"':
+            if in_double_quotes:
+                DEBUG_PRINT("column idq:", column)
+                columns.append(column)
+                column = ""
+                in_double_quotes = False
+                end_quote = True
+                previous = character
+                continue
+            else:
+                in_double_quotes = True
+                continue
+        elif character == "'":
+            if in_single_quotes:
+                columns.append(column)
+                DEBUG_PRINT("column isq:", column)
+                column = ""
+                in_single_quotes = False
+                previous = character
+                continue
+            else:
+                in_single_quotes = True
+                previous = character
+                continue
+        elif character == separator:
+            if in_double_quotes or in_single_quotes:
+                column += character
+                previous = character
+                continue
+            else:
+                if previous in ('"', "'"):
+                    continue
+                DEBUG_PRINT("column is:", column)
+                columns.append(column)
+                column = ""
+                continue
+        else:
+            column += character
+            previous = character
+    DEBUG_PRINT("column ie:", column)
+    columns.append(column)
+    column = ""
+    return columns
+
+def sort_lines(csv_lines, datetime_=True, field=0, keep_datetime_objects=False,
+               expect_quotes=False):
     """Sorts CSV lines based on a field."""
     separator = guess_separator(csv_lines)
     has_header = SNIFFER.has_header("\n".join(csv_lines[0:3]))
     DEBUG_PRINT("Has header", has_header)
     if has_header:
         csv_lines.pop(0)
-    for index in range(len(csv_lines)):
-        csv_lines[index] = csv_lines[index].split(separator)
+    if not expect_quotes:
+        for index in range(len(csv_lines)):
+            csv_lines[index] = csv_lines[index].split(separator)
+    else:
+        for index in range(len(csv_lines)):
+            csv_lines[index] = split_with_quotes(csv_lines[index], separator)
+    #print(csv_lines[0])
+    #print(csv_lines[-1])
+    #print(list(map(lambda x: len(x), csv_lines)))
     if datetime_:
         date_format, time_format, datetime_separator = \
           guess_datetime_format(map(lambda x: x[field], csv_lines))
@@ -201,21 +282,27 @@ def print_sort_lines(filename):
     for line in lines:
         print(separator.join(line))
 
-def get_sorted_lines(filename, sort_field=0, keep_datetime_objects=False):
+def get_sorted_lines(filename, sort_field=0, keep_datetime_objects=False,
+                     expect_quotes=False):
     return get_sorted_lines_file(open(filename, "r"),
                                  sort_field=sort_field,
-                                 keep_datetime_objects=keep_datetime_objects)
+                                 keep_datetime_objects=keep_datetime_objects,
+                                 expect_quotes=expect_quotes)
        
-def get_sorted_lines_file(file, sort_field=0, keep_datetime_objects=False):
+def get_sorted_lines_file(file, sort_field=0, keep_datetime_objects=False,
+                          expect_quotes=False):
     lines = file.readlines()
     return sort_lines_wrapper(lines, sort_field=sort_field,
-                              keep_datetime_objects=keep_datetime_objects)
+                              keep_datetime_objects=keep_datetime_objects,
+                              expect_quotes=expect_quotes)
 
-def sort_lines_wrapper(lines, sort_field=0, keep_datetime_objects=False):
+def sort_lines_wrapper(lines, sort_field=0, keep_datetime_objects=False,
+                       expect_quotes=False):
     for index in range(len(lines)):
         lines[index] = lines[index].rstrip()
     separator = sort_lines(lines, field=sort_field,
-                           keep_datetime_objects=keep_datetime_objects)
+                           keep_datetime_objects=keep_datetime_objects,
+                           expect_quotes=expect_quotes)
     return lines, separator
 
 def render_csv_lines(lines, separator=",", string_type=type("")):
