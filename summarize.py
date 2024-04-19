@@ -73,7 +73,7 @@ def runner():
         total += value
         count += 1
     print()
-    print("Total: %f, average %f, entires %i" % (total, total/count, count))
-    
+    print("Total: %f, average %f, entries %i" % (total, total/count, count))
+
 if __name__ == "__main__":
     runner()

@@ -99,7 +99,10 @@ def guess_time_format(times):
     if len(elements) == 2:
         return 0,1
     elif len(elements) == 3:
-        return 0, 1, 2
+        if len(elements[-1]) > 2:
+            return 0, 1, 2, 3
+        else:
+            return 0, 1, 2
     else:
         raise ValueError("Uknown time format")
 
@@ -117,6 +120,10 @@ def guess_datetime_format(datetimes):
         if " " in datetime_:
             whitespace_separator = True
             separator = " "
+            continue
+        elif "T" in datetime_:
+            t_separator = True
+            separator = "T"
             continue
         else:
             if whitespace_separator:
@@ -191,6 +198,12 @@ def to_strptime(date_format, time_format, separator):
             time_[time_format[0]] = "%H"
             time_[time_format[1]] = "%M"
             time_format_string = ":".join(time_)
+        elif len(time_format) == 4:
+            time_ = [None, None, None]
+            time_[time_format[0]] = "%H"
+            time_[time_format[1]] = "%M"
+            time_[time_format[2]] = "%S"
+            time_format_string = ":".join(time_) + ".%f"
     else:
         time_format_string = ""
         separarator = ""
