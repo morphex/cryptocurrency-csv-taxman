@@ -41,6 +41,9 @@ def guess_date_format(dates):
         elif "." in date:
             date = list(map(int, date.split(".")))
             separator = "."
+        elif "/" in date:
+            date = list(map(int, date.split("/")))
+            separator = "/"
         else:
             raise ValueError("Unsupported date format", date)
         if not year_index:
@@ -117,7 +120,10 @@ def guess_datetime_format(datetimes):
     for datetime_ in datetimes:
         if not datetime_:
             raise ValueError("Empty datetime")
-        if " " in datetime_:
+        if ", " in datetime_:
+            separator = ", "
+            continue
+        elif " " in datetime_:
             whitespace_separator = True
             separator = " "
             continue
