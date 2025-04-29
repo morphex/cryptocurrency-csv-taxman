@@ -69,7 +69,7 @@ def runner():
     values = []
     total = ZERO
     for date, value in transactions.items():
-        print(date, value)
+        DEBUG_PRINT(date, value)
         total += value
         count += 1
     print()

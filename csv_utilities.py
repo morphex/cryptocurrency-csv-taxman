@@ -269,7 +269,7 @@ def split_with_quotes(csv_row, separator):
     return columns
 
 def sort_lines(csv_lines, datetime_=True, field=0, keep_datetime_objects=False,
-               expect_quotes=False):
+               expect_quotes=True):
     """Sorts CSV lines based on a field."""
     separator = guess_separator(csv_lines)
     has_header = SNIFFER.has_header("\n".join(csv_lines[0:3]))
@@ -280,6 +280,7 @@ def sort_lines(csv_lines, datetime_=True, field=0, keep_datetime_objects=False,
         for index in range(len(csv_lines)):
             csv_lines[index] = csv_lines[index].split(separator)
     else:
+        print("expecting quotes")
         for index in range(len(csv_lines)):
             csv_lines[index] = split_with_quotes(csv_lines[index], separator)
     #print(csv_lines[0])
@@ -305,21 +306,21 @@ def print_sort_lines(filename):
         print(separator.join(line))
 
 def get_sorted_lines(filename, sort_field=0, keep_datetime_objects=False,
-                     expect_quotes=False):
+                     expect_quotes=True):
     return get_sorted_lines_file(open(filename, "r"),
                                  sort_field=sort_field,
                                  keep_datetime_objects=keep_datetime_objects,
                                  expect_quotes=expect_quotes)
        
 def get_sorted_lines_file(file, sort_field=0, keep_datetime_objects=False,
-                          expect_quotes=False):
+                          expect_quotes=True):
     lines = file.readlines()
     return sort_lines_wrapper(lines, sort_field=sort_field,
                               keep_datetime_objects=keep_datetime_objects,
                               expect_quotes=expect_quotes)
 
 def sort_lines_wrapper(lines, sort_field=0, keep_datetime_objects=False,
-                       expect_quotes=False):
+                       expect_quotes=True):
     for index in range(len(lines)):
         lines[index] = lines[index].rstrip()
     separator = sort_lines(lines, field=sort_field,
