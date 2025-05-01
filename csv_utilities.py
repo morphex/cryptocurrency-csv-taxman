@@ -7,7 +7,7 @@ import csv, sys
 ZERO = Decimal(0)
 SNIFFER = csv.Sniffer()
 
-from utilities import DEBUG_PRINT
+from utilities import DEBUG_PRINT, WARNING_PRINT
 
 def guess_separator(csv_data_lines, default=","):
     """Returns a guess at what the column separator is in the CSV data."""
@@ -97,7 +97,7 @@ def guess_time_format(times):
     for time in times:
         length = len(time)
         if length > time_size or length < time_size:
-            raise ValueError("Inconsistent time size")
+            WARNING_PRINT("Inconsistent time size")
     elements = times[0].split(":")
     if len(elements) == 2:
         return 0,1
