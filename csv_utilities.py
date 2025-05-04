@@ -172,7 +172,10 @@ denominator."""
     try:
         return Decimal(float(value))
     except ValueError:
-        return Decimal(value.replace(",", "."))
+        if "." in value:
+            return Decimal(value.replace(",", ""))
+        else:
+            return Decimal(value.replace(",", "."))
 
 def is_float(value):
     """Returns true if value can be parsed as flaot."""

@@ -32,6 +32,8 @@ def parse_mda_file(filename, date_index=0, start=None, end=None):
             for index in indexes:
                 if is_float(line[index]):
                     float_fields.append(index)
+                else:
+                    DEBUG_PRINT("not float", line[index])
         for index in float_fields:
             values.append(parse_float(line[index]))
         dates[date] = values
